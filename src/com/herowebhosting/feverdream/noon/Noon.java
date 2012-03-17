@@ -62,6 +62,10 @@ public class Noon extends JavaPlugin {
         log.info("[Noon] Noon (v1.5 by Feverdream-GuntherDW) is on.");
     }
 
+    public boolean hasTimer(String worldName) {
+        return this.timerTasks.containsKey(worldName);
+    }
+
     public void addTimer(String worldname, SunShine ss) {
         if (this.timerTasks.containsKey(worldname)) {
             scheduler.cancelTask(this.timerTasks.get(worldname));
@@ -78,6 +82,15 @@ public class Noon extends JavaPlugin {
             return true;
         } else
             return false;
+    }
+
+
+    public void removeTimer(String worldName) {
+        if(this.timerTasks.containsKey(worldName)) {
+            int taskId = this.timerTasks.get(worldName);
+            scheduler.cancelTask(taskId);
+            this.timerTasks.remove(worldName);
+        }
     }
 
     public void onDisable() {
