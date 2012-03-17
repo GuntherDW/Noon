@@ -6,75 +6,70 @@ import org.bukkit.World;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitScheduler;
 
+import java.io.File;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
-import java.util.Timer;
 import java.util.logging.Logger;
 
 public class Noon extends JavaPlugin {
-    // private Timer tick = null;
-    // private int rate = 30000;
-    private int rate = 1000;
-    // private Settings settings = new Settings();
-    // private Hashtable<Timer, SunShine> clocks = new Hashtable<Timer, SunShine>();
-    private Map<String, NoonTimer> timertasks = new HashMap<String, NoonTimer>();
+    private int rate = 30; // SECONDS
     private final Logger log = Logger.getLogger("Minecraft");
-    public static String lastSetWho = null;
-    public static String lastSetHow = null;
+    private HashMap<String, Integer> timerTasks = new HashMap<String, Integer>();
+    private YamlConfiguration globalConfig = new YamlConfiguration();
+    private File configFile = null;
+    private BukkitScheduler scheduler = null;
 
-    public void reloadConfig() {
-        if (!this.timertasks.isEmpty()) {
-            for (NoonTimer tick : this.timertasks.values()) {
-                Timer timer = tick.getTimertask();
-                timer.cancel();
-            }
-
-            this.timertasks.clear();
+    public void reloadNoonConfig() {
+        this.scheduler.cancelTasks(this);
+        try {
+            globalConfig.load(configFile);
+        } catch (Exception e) {
+            log.severe("[Noon] Exception thrown while loading config!");
+            e.printStackTrace();
+            return;
         }
 
-        ConfigurationSection section = getConfig().getConfigurationSection("worlds");
-
+        ConfigurationSection section = globalConfig.getConfigurationSection("worlds");
 
         if (section != null) {
             Set<String> listofworlds = section.getKeys(false);
-            // List<String> listofworlds = getConfig().getKeys("worlds");
             for (String wname : listofworlds) {
-                World world = getServer().getWorld(wname);
+                World world = this.getServer().getWorld(wname);
                 if (world == null) {
                     log.severe("[Noon] World with name " + wname + " not found!");
                 } else {
                     // Settings.addTime(wname, this.getConfiguration().getString("worlds."+wname, "day"));
-                    log.info("[Noon] Setting time for world " + world.getName());
                     SunShine ss = new SunShine(world);
-                    ss.setWantedTime(Settings.resolveTime(getConfig().getString("worlds." + wname, "day")));
-
+                    String wantedTime = globalConfig.getString("worlds." + wname, "day");
+                    log.info("[Noon] Setting time for world " + world.getName() + " to " + wantedTime);
+                    ss.setWantedTime(Settings.resolveTime(wantedTime));
+                    Settings.addTime(wname, wantedTime);
                     this.addTimer(world.getName(), ss);
                 }
             }
         }
-        if (getConfig().getBoolean("permissions", false)) {
-            log.info("[Noon] Permissions support is enabled!");
-        }
     }
 
     public void onEnable() {
-        this.reloadConfig();
+        this.configFile = new File(this.getDataFolder(), "config.yml");
+        this.scheduler = getServer().getScheduler();
+        this.reloadNoonConfig();
         log.info("[Noon] Noon (v1.5 by Feverdream-GuntherDW) is on.");
     }
 
     public void addTimer(String worldname, SunShine ss) {
-        if (this.timertasks.containsKey(worldname)) {
-            this.timertasks.get(worldname).getSunshine().setWantedTime(ss.wantedTime);
-        } else {
-            Timer ti = new Timer();
-            ti.schedule(ss, 0L, this.rate);
-            // this.clocks.put(ti, ss);
-            this.timertasks.put(worldname, new NoonTimer(ti, ss));
+        if (this.timerTasks.containsKey(worldname)) {
+            scheduler.cancelTask(this.timerTasks.get(worldname));
+            this.timerTasks.remove(worldname);
         }
+        int taskId = scheduler.scheduleAsyncRepeatingTask(this, ss, 0L, this.rate * 20);
+        this.timerTasks.put(worldname, taskId);
+
     }
 
     public boolean setTime(World world, String time) {
@@ -86,25 +81,11 @@ public class Noon extends JavaPlugin {
     }
 
     public void onDisable() {
-        for (NoonTimer tick : this.timertasks.values()) {
-            Timer timer = tick.getTimertask();
-            timer.cancel();
-        }
+        this.getServer().getScheduler().cancelTasks(this);
         log.info("[Noon] Noon (v1.5 by Feverdream-GuntherDW) is off.");
     }
 
-    public void SetAllTimes(long i) {
-        for (NoonTimer nt : this.timertasks.values()) {
-            SunShine ss = nt.getSunshine();
-            long time = ss.clock.getTime();
-            ss.clock.setTime(time - time % 24000L + 24000L + i);
-        }
-    }
-
     public boolean onCommand(CommandSender sender, Command command, String commandLabel, String[] args) {
-        /* if (args.length == 0) {
-            return GetNoonStatu(sender);
-        } */
         return DoNoon(sender, args);
     }
 
@@ -116,7 +97,7 @@ public class Noon extends JavaPlugin {
 
         if (realargs.length > 0 && realargs[0].equalsIgnoreCase("reload")) {
             if (agent.hasPermission("noon.reload")) {
-                this.reloadConfig();
+                this.reloadNoonConfig();
                 agent.sendMessage("[Noon] Reloading config...");
             } else {
                 agent.sendMessage("You don't have permissions for that!");
@@ -169,6 +150,8 @@ public class Noon extends JavaPlugin {
         }
 
         if (hasPermission(agent, "noon.noon")) {
+
+            String lastSetWho = null, lastSetHow = null;
 
             lastSetWho = name;
             if (cmd.equalsIgnoreCase("day")) {

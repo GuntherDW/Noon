@@ -8,8 +8,9 @@ import java.util.Timer;
 public class NoonTimer {
     private Timer timertask;
     private SunShine sunshine;
+    private int taskId;
 
-    public NoonTimer(Timer timertask, SunShine sunshine) {
+    public NoonTimer(Timer timertask, SunShine sunshine, int taskId) {
         this.timertask = timertask;
         this.sunshine = sunshine;
     }
@@ -28,5 +29,13 @@ public class NoonTimer {
 
     public void setSunshine(SunShine sunshine) {
         this.sunshine = sunshine;
+    }
+
+    public int getTaskId() {
+        return taskId;
+    }
+
+    public void setTaskId(int taskId) {
+        this.taskId = taskId;
     }
 }

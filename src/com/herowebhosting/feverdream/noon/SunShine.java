@@ -2,14 +2,12 @@ package com.herowebhosting.feverdream.noon;
 
 import org.bukkit.World;
 
-import java.util.TimerTask;
 import java.util.logging.Logger;
 
-public class SunShine extends TimerTask {
+public class SunShine extends Thread {
     public long wantedTime = 0L;
     public World clock = null;
     private Logger log = Logger.getLogger("Minecraft");
-    public boolean enable = true;
 
     public SunShine(World w) {
         this.clock = w;
@@ -24,7 +22,6 @@ public class SunShine extends TimerTask {
         long relativeTime = time;
         long dayStart = wantedTime;
         try {
-
             if ((relativeTime > 12000L) && (dayStart == 0)) {
                 this.clock.setTime(0L);
                 // log.log(Level.INFO, "[Noon] Setting time for "+this.clock.getName());
