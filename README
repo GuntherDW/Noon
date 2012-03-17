@@ -1,0 +1,12 @@
+All plugins under this directory are AGPL v3.
+
+This means they are a form of GPL with one extra restriction:
+If you use them on your server, you must also give out source to them if people ask.
+
+I will enforce this.
+
+There is nothing worse then tryng to learn an API and not having source code to look at to learn.
+
+Don't do that to people, its just cruel.
+
+- Feverdream
