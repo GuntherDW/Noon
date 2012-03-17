@@ -1,0 +1,14 @@
+name: Noon
+main: com.herowebhosting.feverdream.noon.Noon
+version: 1.5
+website: http://github.com/feverdream/
+depend: [ TweakcraftUtils ]
+authors: [Feverdream, GuntherDW]
+description: >
+             Make the current time always what you choose for Bukkit.
+             This plugin is not yet one of the default plugins shipped with Bukkit...
+commands:
+  noon:
+    description: Sets the time.
+    usage: /<command> [day|night|sunrise|sunset|tweakday]
+           
