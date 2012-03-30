@@ -11,4 +11,5 @@ commands:
   noon:
     description: Sets the time.
     usage: /<command> [day|night|sunrise|sunset|tweakday]
+    permission: noon.noon
            
